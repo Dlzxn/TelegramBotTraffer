@@ -11,7 +11,8 @@ from db.create_database import get_session, init_db
 from logs.loger_cfg import logger
 from profile.profile_router import pro_router
 from main_menu.main_router import dp_main
-from profile.profile_router import usd_to_rub
+from profile.profile_router import usd_to_rub, top_users
+from money_out_.money_out import out
 
 
 load_dotenv()
@@ -34,6 +35,8 @@ async def main():
 
 
     dp.include_router(pro_router)
+    dp.include_router(out)
+
     dp.include_router(dp_main)
 
 
@@ -45,7 +48,8 @@ async def main():
 async def tasks():
     task_usd: asyncio.Task = asyncio.create_task(usd_to_rub())
     task_main: asyncio.Task = asyncio.create_task(main())
-    await asyncio.gather(task_usd, task_main)
+    task_top: asyncio.Task = asyncio.create_task(top_users())
+    await asyncio.gather(task_usd, task_main, top_users())
 
 
 

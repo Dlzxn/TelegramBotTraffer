@@ -24,6 +24,19 @@ class User(Base):
     pay_out = Column(BigInteger, nullable=False, default=0)
 
 
+class Ticket(Base):
+    __tablename__ = "money_out"
+    id = Column(BigInteger, primary_key=True, index=True)
+    id_user = Column(BigInteger)
+    money_out = Column(BigInteger, nullable=False, default=0)
+    bank = Column(String, nullable=False)
+    card_number = Column(String, nullable=False)
+    commentary = Column(String, nullable=True)
+    time_created = Column(String, nullable=False, default=0)
+    status = Column(String, nullable=False, default="🕐 Создана")
+
+
+
 async def create_tables():
     engine, _ = await init_db()
     async with engine.begin() as conn:
@@ -38,6 +51,6 @@ async def recreate_tables():
 
 
 
-
+#
 # # Вызов функции для перегенерации таблиц
 # asyncio.run(recreate_tables())
