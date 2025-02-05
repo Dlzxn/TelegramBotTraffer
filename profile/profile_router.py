@@ -4,7 +4,7 @@ import os, asyncio, aiohttp
 from io import BytesIO
 
 from profile.create_img import create_profile_image
-from db.CRUD import get_user_info_by_id, get_tickets_by_user, get_all_users
+from db.CRUD import get_user_info_by_id, get_tickets_by_user, get_all_users, update_user_privacy
 from db.create_database import get_session
 
 CURS = 88
@@ -70,7 +70,8 @@ profile_keyboard = InlineKeyboardMarkup(inline_keyboard = [[but1, but2], [but3, 
 
 @pro_router.message(F.text == "👦 Профиль")
 async def pro_handler(message: types.Message):
-    user = await get_user_info_by_id(get_session(), message.from_user.id)
+    async with get_session()() as session:
+        user = await get_user_info_by_id(session, message.from_user.id)
     data = {
         "id": message.from_user.id,
         "name": message.from_user.first_name,
@@ -84,7 +85,12 @@ async def pro_handler(message: types.Message):
     # Использование функции в обработчике
     await message.answer_photo(photo = FSInputFile(image_path), reply_markup=profile_keyboard)
 
-
+@pro_router.callback_query(lambda c: c.data == "inviz")
+async def inviz(c: CallbackQuery):
+    async with get_session()() as session:
+        user = await get_user_info_by_id(session, c.from_user.id)
+    async with get_session()() as session:
+        await update_user_privacy(session, c.from_user.id, user.is_private)
 
 @pro_router.callback_query(lambda c: c.data == "hitory_output_money")
 async def output_money_handler(c: CallbackQuery):
@@ -119,21 +125,19 @@ async def stat_handler(c: CallbackQuery):
     message = ""
     index = 1
     for user in TOP_USERS:
-        message += f"{index}. {user.username}\n Сумма вывода: {user.money}RUB\n\n"
+        print("PRIVAAAT", user.is_private)
+        if not user.is_private:
+            # Формируем правильную ссылку с экранированием только спецсимволов
+            user_url = f"@{user.username}"
+            message += f"{index}. {user_url}\nСумма вывода: {user.money} RUB\n\n"
+        else:
+            message += f"{index}. Анонимный пользователь\nСумма вывода: {user.money} RUB\n\n"
         index += 1
-    await c.message.reply(text = f"ТОП ПОЛЬЗОВАТЕЛЕЙ:\n"
-                                 f"{message}")
 
+    # Экранируем специальные символы в тексте для MarkdownV2
+    escaped_message = message
 
-
-
-
-
-
-
-
-
-
-
-
-
+    # Отправляем сообщение
+    await c.message.reply(
+        text=f"ТОП ПОЛЬЗОВАТЕЛЕЙ:\n{escaped_message}"
+    )

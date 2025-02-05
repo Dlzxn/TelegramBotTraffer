@@ -36,6 +36,22 @@ class Ticket(Base):
     status = Column(String, nullable=False, default="🕐 Создана")
 
 
+class Offer(Base):
+    __tablename__ = "offers"
+    id = Column(BigInteger, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    money = Column(BigInteger, nullable=False, default=0)
+    action = Column(String, nullable=False)
+    commentary = Column(String, nullable=True)
+    geo = Column(String, nullable=False)
+    user_id = Column(String, nullable=True, default="")
+    url = Column(String, nullable=True)
+    button_name = Column(String, nullable=True, default=f"Оффер")
+
+
+
+
+
 
 async def create_tables():
     engine, _ = await init_db()
@@ -50,7 +66,7 @@ async def recreate_tables():
         await conn.run_sync(Base.metadata.create_all)  # Создание новых таблиц
 
 
-
+#
 #
 # # Вызов функции для перегенерации таблиц
 # asyncio.run(recreate_tables())

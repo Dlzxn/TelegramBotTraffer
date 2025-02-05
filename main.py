@@ -13,6 +13,11 @@ from profile.profile_router import pro_router
 from main_menu.main_router import dp_main
 from profile.profile_router import usd_to_rub, top_users
 from money_out_.money_out import out
+from admin.adm_panel import admin_router
+from offers.offer_rout import offers_rout
+from admin.offer_refact import adm_router_refact
+from admin.get_offers_fron_user import get_offers_router
+from admin.offer_to_user import get_offers_router_to
 
 
 load_dotenv()
@@ -36,6 +41,11 @@ async def main():
 
     dp.include_router(pro_router)
     dp.include_router(out)
+    dp.include_router(admin_router)
+    dp.include_router(adm_router_refact)
+    dp.include_router(offers_rout)
+    dp.include_router(get_offers_router)
+    dp.include_router(get_offers_router_to)
 
     dp.include_router(dp_main)
 
