@@ -96,6 +96,7 @@ async def show_offer_details(c: CallbackQuery):
     text_all_users = ""
     for id in offer.user_id.split():
         async with get_session()() as session:
+            print(F"ID в оффере {id}")
             user = await get_user_info_by_id(session, int(id))
             text_all_users += f"@{user.username} "
 

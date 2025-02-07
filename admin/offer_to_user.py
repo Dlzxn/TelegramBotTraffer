@@ -7,7 +7,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from admin.get_offers_fron_user import AddUrl
 from logs.loger_cfg import logger
 from db.CRUD import (get_all_offers, get_offer_by_id, get_session, add_url_to_offer, get_user_info_by_username,
-                     assign_user_to_offer)
+                     assign_user_to_offer, create_myoffer)
 from admin.keyboard.key_admin import admin_keyboard
 
 get_offers_router_to = Router()
@@ -171,7 +171,7 @@ async def give_offer_to_user(callback: CallbackQuery, state: FSMContext):
     offer = offer[0]
 
     # Попросим пользователя ввести свой юзернейм
-    await callback.message.answer(f"Введите ваш юзернейм для получения оффера {offer.name}:")
+    await callback.message.answer(f"Введите ваш юзернейм для получения оффера:")
     await state.set_state(AddUser.url)
     await state.update_data(id=offer.id)
 
@@ -195,9 +195,9 @@ async def handle_username_input(message: Message, state: FSMContext):
             if str(user.id) in str(offer.user_id).split():
                 await message.answer("Данный пользователь уже выполняет оффер")
             else:
-
+                await create_myoffer(session, offer.name, offer.money, offer.action, offer.geo, str(user.id))
+                await assign_user_to_offer(session, data["id"], user.id)
                 await message.answer(f"Оффер {offer.name} выдан пользователю {user.username}!")
         else:
-            await assign_user_to_offer(session, data["id"], user.id)
             await message.answer(f"Пользователь с юзернеймом {username} не найден.")
         await state.clear()

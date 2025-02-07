@@ -22,6 +22,7 @@ class User(Base):
     money = Column(BigInteger, nullable=False, default=0)
     lids = Column(BigInteger, nullable=False, default=0)
     pay_out = Column(BigInteger, nullable=False, default=0)
+    is_ban = Column(Boolean, nullable=False, default=False)
 
 
 class Ticket(Base):
@@ -38,6 +39,18 @@ class Ticket(Base):
 
 class Offer(Base):
     __tablename__ = "offers"
+    id = Column(BigInteger, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    money = Column(BigInteger, nullable=False, default=0)
+    action = Column(String, nullable=False)
+    commentary = Column(String, nullable=True)
+    geo = Column(String, nullable=False)
+    user_id = Column(String, nullable=True, default="")
+    url = Column(String, nullable=True)
+    button_name = Column(String, nullable=True, default=f"Оффер")
+
+class MyOffer(Base):
+    __tablename__ = "myoffers"
     id = Column(BigInteger, primary_key=True, index=True)
     name = Column(String, nullable=False)
     money = Column(BigInteger, nullable=False, default=0)

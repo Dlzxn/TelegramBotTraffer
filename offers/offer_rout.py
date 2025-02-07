@@ -3,7 +3,7 @@ from aiogram.types import (PollAnswer, ReplyKeyboardMarkup, KeyboardButton, Inli
                            Message, CallbackQuery)
 
 
-from db.CRUD import get_offers_by_user_id, get_session, get_all_offers, assign_user_to_offer
+from db.CRUD import get_offers_by_user_id, get_session, get_all_offers, assign_user_to_offer, create_myoffer
 
 
 but1 = InlineKeyboardButton(text = "🔍 Все офферы", callback_data = "all_offers")
@@ -146,6 +146,9 @@ async def take_offer(c: CallbackQuery):
         user_id = c.from_user.id
         print(f"TAKE OFFER {offer_id}")
         result = await assign_user_to_offer(session, offer_id, user_id)
+        offer = await get_offer_by_id(session, offer_id)
+        offer = offer[0]
+        await create_myoffer(session, offer.name, offer.money, offer.action, offer.geo, str(c.from_user.id))
 
     if result:
         await c.message.answer("Вы успешно взяли оффер!")

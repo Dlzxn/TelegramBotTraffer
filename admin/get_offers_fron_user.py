@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQu
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from logs.loger_cfg import logger
-from db.CRUD import get_all_offers, get_offer_by_id, get_session, add_url_to_offer
+from db.CRUD import get_all_myoffers, get_myoffer_by_id, get_session, add_url_to_offer
 from admin.keyboard.key_admin import admin_keyboard
 
 get_offers_router = Router()
@@ -17,7 +17,7 @@ ITEMS_PER_ROW = 4
 
 async def generate_offers_keyboard(page: int = 1):
     async with get_session()() as session:
-        all_offers = await get_all_offers(session)
+        all_offers = await get_all_myoffers(session)
 
     # Фильтрация офферов (ваш текущий фильтр)
     filtered_offers = [offer for offer in all_offers if offer.user_id != "" and offer.url is None]
@@ -98,7 +98,7 @@ async def show_offer_detail(callback: CallbackQuery):
 
     # Получаем информацию о оффере из БД
     async with get_session()() as session:
-        offer = await get_offer_by_id(session, offer_id)
+        offer = await get_myoffer_by_id(session, offer_id)
 
     offer = offer[0]
 

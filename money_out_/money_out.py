@@ -30,11 +30,15 @@ class OutputForm(StatesGroup):
 @out.callback_query(lambda c: c.data == "output_money")
 async def out_menu(c: CallbackQuery, state: FSMContext):
     user_tickets = await get_tickets_by_user(get_session(), c.from_user.id)
+
     logger.info("Выводы пользователя:" ,user_tickets)
     all_status = True
-    for ticket in user_tickets:
-        if ticket.status == "🕐 Создана":
+    p = 0
+    for i in range(len(user_tickets)):
+        if user_tickets[i].status == "🕐 Создана":
             all_status = False
+            p = i
+            break
 
     if all_status:
         await c.message.answer("Введите cумму в RUB", reply_markup=keyword_out_money)
@@ -45,18 +49,24 @@ async def out_menu(c: CallbackQuery, state: FSMContext):
     else:
         await c.message.answer(f"Вы уже подавали заявку на вывод!\n"
                                f"Данные заявки id:"
-                               f" {user_tickets[0].id}\n"
-                               f" Сумма: {user_tickets[0].money_out}\n"
-                               f" Статус: {user_tickets[0].status}\n"
+                               f" {user_tickets[p].id}\n"
+                               f" Сумма: {user_tickets[p].money_out}\n"
+                               f" Статус: {user_tickets[p].status}\n"
                                )
 
 
 @out.message(OutputForm.Summary)
 async def get_name(message: Message, state: FSMContext):
     try:
-        await state.update_data(sum=int(message.text))  # Сохраняем имя
-        await message.answer("Выберите способ вывода(название банка/номер/крипта)", reply_markup=keyword_out_money)
-        await state.set_state(OutputForm.Bank_name)
+        await state.update_data(sum=int(message.text))
+        async with get_session()() as session:
+            user = await get_user_info_by_id(session, message.from_user.id)
+            if user.money >= int(message.text):
+                await message.answer("Выберите способ вывода(название банка/номер/крипта)", reply_markup=keyword_out_money)
+                await state.set_state(OutputForm.Bank_name)
+
+            else:
+                await message.answer("Не хватает средств на счету")
 
     except Exception as e:
         logger.error(e)

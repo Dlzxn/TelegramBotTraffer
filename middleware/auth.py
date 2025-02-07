@@ -79,7 +79,11 @@ class CaptchaMiddleware(BaseMiddleware):
         async with self.session_maker() as session:
             user_in_db = await get_user_by_id(session, event.from_user.id)
 
+
             if user_in_db is not None:
+                if user_in_db.is_ban:
+                    await self.bot.send_message(event.chat.id, text="Вы заблокированы.")
+                    return None
 
                 list_not_sub: list = []
                 for channel in LIST_TO_SUB:

@@ -8,7 +8,7 @@ from logs.loger_cfg import logger
 from sqlalchemy.orm import selectinload
 from sqlalchemy import update, delete, and_
 
-from db.create_tables import User, Offer
+from db.create_tables import User, Offer, MyOffer
 from logs.loger_cfg import logger
 from db.create_database import get_session
 
@@ -65,6 +65,19 @@ async def get_user_by_id(session, user_id: str | int) -> User | None:
 
         logger.info(f"Пользователь с ID {user_id} не найден")
         return None
+
+async def update_user_admin_status(session: AsyncSession, telegram_id: int, is_admin: bool):
+    """ Обновляет статус администратора пользователя. """
+    query = select(User).where(User.telegram_id == telegram_id)
+    result = await session.execute(query)
+    user = result.scalars().first()
+
+    if user:
+        user.is_admin = is_admin
+        await session.commit()
+        return True
+
+    return False
 
 
 async def get_all_users(session: AsyncSession) -> list:
@@ -182,6 +195,77 @@ async def remove_lids(session, user_id: int | str, amount: int):
                 logger.info(f"Пользователь с ID {user_id} не найден")
 
 
+
+async def get_user_by_username(session: AsyncSession, username: str):
+    query = select(User).where(User.username == username)
+    result = await session.execute(query)
+    return result.scalar()
+
+
+async def update_money(session: AsyncSession, telegram_id: int, amount: int):
+    """Обновить баланс пользователя"""
+    result = await session.execute(select(User).where(User.id == telegram_id))
+    user = result.scalars().first()
+    if user:
+        user.money = amount
+        await session.commit()
+        return user.money
+    return None
+
+
+async def update_plus_money(session: AsyncSession, telegram_id: int, amount: int):
+    """Обновить баланс пользователя"""
+    result = await session.execute(select(User).where(User.telegram_id == telegram_id))
+    user = result.scalars().first()
+    if user:
+        user.money = amount
+        await session.commit()
+        return user.money
+    return None
+
+async def update_out_money(session: AsyncSession, telegram_id: int, amount: int):
+    """Обновить баланс пользователя"""
+    result = await session.execute(select(User).where(User.telegram_id == telegram_id))
+    user = result.scalars().first()
+    if user:
+        user.pay_out = amount
+        await session.commit()
+        return user.pay_out
+    return None
+
+
+async def update_plus_out_money(session: AsyncSession, telegram_id: int, amount: int):
+    """Обновить баланс пользователя"""
+    result = await session.execute(select(User).where(User.telegram_id == telegram_id))
+    user = result.scalars().first()
+    if user:
+        user.pay_out += amount
+        await session.commit()
+        return user.pay_out
+    return None
+
+async def update_lids(session: AsyncSession, telegram_id: int, lids_count: int):
+    """Обновить количество лидов"""
+    result = await session.execute(select(User).where(User.id == telegram_id))
+    user = result.scalars().first()
+    if user:
+        user.lids = lids_count
+        await session.commit()
+        return user.lids
+    return None
+
+async def update_ban_status(session: AsyncSession, telegram_id: int, is_ban: bool):
+    """Обновить статус бана"""
+    result = await session.execute(select(User).where(User.id == telegram_id))
+    user = result.scalars().first()
+    if user:
+        user.is_ban = is_ban
+        await session.commit()
+        return user.is_ban
+    return None
+
+
+
 async def get_user_info_by_id(session_maker, user_id: int | str):
     """Получить всю информацию о пользователе по его Telegram ID"""
     async with session_maker as session:
@@ -247,14 +331,6 @@ async def create_ticket(session_maker, user_id: int, money_out: int, bank: str, 
 
         return ticket  # Возвращаем созданный тикет
 
-
-async def get_ticket_by_id(session: AsyncSession, ticket_id: int):
-    """Получение тикета по ID"""
-    async with session.begin():
-        stmt = select(Ticket).where(Ticket.id == ticket_id)
-        result = await session.execute(stmt)
-        ticket = result.scalars().first()
-        return ticket
 
 async def get_tickets_by_user(session_maker, user_id: int):
     """Получить все тикеты пользователя по его Telegram ID"""
@@ -333,6 +409,13 @@ async def get_offer_by_id(session: AsyncSession, id: int):
         )
         return query.scalars().all()
 
+async def get_myoffer_by_id(session: AsyncSession, id: int):
+    """Получение всех офферов для указанного user_id"""
+    async with session.begin():
+        query = await session.execute(
+            select(MyOffer).where(MyOffer.id == id).options(selectinload("*"))
+        )
+        return query.scalars().all()
 
 async def get_all_offers(session: AsyncSession):
     """Получение всех офферов для указанного user_id"""
@@ -356,7 +439,7 @@ async def delete_offer(session: AsyncSession, offer_id: int):
 async def add_url_to_offer(session: AsyncSession, offer_id: int, url: str):
     """Добавление ссылки в оффер"""
     async with session.begin():
-        query = update(Offer).where(Offer.id == offer_id).values(url=url)
+        query = update(MyOffer).where(MyOffer.id == offer_id).values(url=url)
         result = await session.execute(query)
         await session.commit()
         return result.rowcount > 0  # True, если обновлено
@@ -420,6 +503,14 @@ async def get_all_offers(session: AsyncSession):
 
     return offers
 
+async def get_all_myoffers(session: AsyncSession):
+    """Получение всех офферов"""
+    async with session.begin():
+        result = await session.execute(select(MyOffer))  # Запрос для получения всех офферов
+        offers = result.scalars().all()
+
+    return offers
+
 
 
 async def update_offer_name(db: AsyncSession, offer_id: int, new_name: str):
@@ -441,7 +532,7 @@ async def update_offer_name(db: AsyncSession, offer_id: int, new_name: str):
 async def get_offers_by_user_id(session: AsyncSession, user_id: int):
     """Получение всех офферов"""
     async with session.begin():
-        result = await session.execute(select(Offer))  # Запрос для получения всех офферов
+        result = await session.execute(select(MyOffer))  # Запрос для получения всех офферов
         offers = result.scalars().all()
     offers_return: list = []
     for offer in offers:
@@ -456,3 +547,85 @@ async def get_user_by_username(session: AsyncSession, username: str):
     stmt = select(User).where(User.username == username)
     result = await session.execute(stmt)
     return result.scalars().first()
+
+
+
+
+
+
+
+#_________________________________myoffers
+
+
+async def create_myoffer(session: AsyncSession, name: str, money: int, action: str, geo: str,
+                        user_id: str = "", url: str = None, button_name: str = "Оффер", commentary: str = None):
+    offer = MyOffer(name=name, money=money, action=action, geo=geo,
+                    user_id=user_id, url=url, button_name=button_name, commentary=commentary)
+    session.add(offer)
+    await session.commit()
+    await session.refresh(offer)
+    return offer
+
+async def get_myoffer(session: AsyncSession, offer_id: int):
+    result = await session.execute(select(MyOffer).where(MyOffer.id == offer_id))
+    return result.scalars().first()
+
+async def update_myoffer(session: AsyncSession, offer_id: int, **kwargs):
+    result = await session.execute(select(MyOffer).where(MyOffer.id == offer_id))
+    offer = result.scalars().first()
+    if not offer:
+        return None
+    for key, value in kwargs.items():
+        if hasattr(offer, key):
+            setattr(offer, key, value)
+    await session.commit()
+    return offer
+
+async def delete_myoffer(session: AsyncSession, offer_id: int):
+    result = await session.execute(select(MyOffer).where(MyOffer.id == offer_id))
+    offer = result.scalars().first()
+    if not offer:
+        return None
+    await session.delete(offer)
+    await session.commit()
+    return offer
+
+async def list_myoffers(session: AsyncSession):
+    result = await session.execute(select(MyOffer))
+    return result.scalars().all()
+
+
+
+async def get_tickets_by_status(session: AsyncSession, status: str):
+    """Получение всех заявок с заданным статусом."""
+    async with session.begin():
+        result = await session.execute(select(Ticket).where(Ticket.status == status))
+        return result.scalars().all()
+
+async def get_ticket_by_id(session, ticket_id):
+    # Не начинаем новую транзакцию
+    result = await session.execute(select(Ticket).filter_by(id=ticket_id))
+    ticket = result.scalars().first()
+    return ticket
+
+async def update_ticket_status(session: AsyncSession, ticket_id: int, new_status: str):
+    """Обновление статуса заявки."""
+    async with session.begin():
+        ticket = await get_ticket_by_id(session, ticket_id)
+        if ticket:
+            ticket.status = new_status
+            await session.commit()
+            return True
+        return False
+
+async def get_pending_tickets(session: AsyncSession):
+    """Получение всех заявок со статусом '🕐 Создана'."""
+    return await get_tickets_by_status(session, "🕐 Создана")
+
+async def approve_ticket(session: AsyncSession, ticket_id: int):
+    """Подтверждение заявки."""
+    return await update_ticket_status(session, ticket_id, "✅ Подтверждена")
+
+async def reject_ticket(session: AsyncSession, ticket_id: int):
+    """Отклонение заявки."""
+    return await update_ticket_status(session, ticket_id, "❌ Отклонена")

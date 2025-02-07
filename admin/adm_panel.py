@@ -8,6 +8,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from db.CRUD import create_offer, get_session
 from admin.keyboard.key_admin import admin_keyboard, offer_keyboard
+from admin.middlware_admin.adm_ware import AdminMiddleware
 
 # Определение состояния для создания оффера
 class CreateOffer(StatesGroup):
@@ -19,6 +20,8 @@ class CreateOffer(StatesGroup):
 
 # Роутер для обработки команд администратора
 admin_router = Router()
+# admin_router.message.middleware(AdminMiddleware())
+
 
 
 main_admins = ["Tashlinskiy", "illgettomorow"]
