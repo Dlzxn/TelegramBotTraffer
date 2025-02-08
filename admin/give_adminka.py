@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from admin.adm_panel import main_admins
-from db.CRUD import get_session, get_user_info_by_id, update_user_admin_status
+from db.CRUD import get_session, get_user_info_by_id, update_user_admin_status, get_user_by_username
 from admin.keyboard.key_admin import admin_keyboard
 
 admin_router_adm = Router()
@@ -51,13 +51,14 @@ async def process_admin_action(message: Message, state: FSMContext):
     action = data["action"]
 
     async with get_session()() as session:
-        user = await get_user_info_by_id(session, message.from_user.id)
+        id_user = await get_user_by_username(session, message.text)
+        user = await get_user_info_by_id(session, id_user.telegram_id)
 
         if not user:
             await message.answer("Пользователь не найден или не является участником бота.")
             return
 
-        new_status = action == "give_admin"
+        new_status = not user.is_admin
         await update_user_admin_status(session, user.telegram_id, new_status)
         await message.answer(
             f"Права администратора {'выданы' if new_status else 'забраны'} у пользователя {user.username or user.telegram_id}.")
