@@ -46,7 +46,7 @@ def create_profile_image(user_data: dict):
 
     # Лиды
     font_lids = ImageFont.truetype(font_path, 60)
-    draw_centered_text(draw, (1550, 720), str(user_data['lids']), font_lids, lids_color)
+    draw_centered_text(draw, (1550, 720), str(user_data['lids']) + "RUB", font_lids, lids_color)
 
     # 5. Совмещаем слои
     result = Image.alpha_composite(base_image, txt_layer)

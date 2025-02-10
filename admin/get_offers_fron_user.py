@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQu
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from logs.loger_cfg import logger
-from db.CRUD import get_all_myoffers, get_myoffer_by_id, get_session, add_url_to_offer
+from db.CRUD import get_all_myoffers, get_myoffer_by_id, get_session, add_url_to_offer, get_user_info_by_id
 from admin.keyboard.key_admin import admin_keyboard
 
 get_offers_router = Router()
@@ -106,11 +106,11 @@ async def show_offer_detail(callback: CallbackQuery):
     builder = InlineKeyboardBuilder()
     builder.add(
         InlineKeyboardButton(
-            text="Вернуться к списку",
+            text="↩Вернуться к списку",
             callback_data=f"offers_page_{page}"
         ),
         InlineKeyboardButton(
-            text="Добавить ссылку",
+            text="🔗Добавить ссылку",
             callback_data=f"add_url_{offer_id}"
         )
     )
@@ -118,12 +118,22 @@ async def show_offer_detail(callback: CallbackQuery):
 
     # Формируем текст сообщения (добавьте нужные поля из вашей модели)
     print("ОФФЕР ДЛЯ ЮРЛ:", offer.id)
+    url_users = ""
+    for x in offer.user_id.split():
+        async with get_session()() as session:
+            user = await get_user_info_by_id(session, int(x))
+            logger.info(f"Пользователь {user}")
+            try:
+                url_users += f"@{user.username} "
+            except Exception as e:
+                logger.error(e)
+
     message_text = (
-        f"Детальная информация по офферу {offer.id}:\n\n"
-        f"Название кнопки: {offer.button_name}\n"
-        f"Название: {offer.name}\n"
-        f"Комментарий: {offer.commentary}\n\n"
-        f"В работе: {offer.user_id}"
+        f"📃Детальная информация по офферу {offer.id}:\n\n"
+        f"⌨Название кнопки: {offer.button_name}\n"
+        f"📦Название: {offer.name}\n"
+        f"📄Комментарий: {offer.commentary}\n\n"
+        f"👤Пользователи: {url_users}"
     )
 
     await callback.message.edit_text(
@@ -141,7 +151,7 @@ async def handle_add_url(callback: CallbackQuery, state: FSMContext):
     offer_id = int(callback.data.split("_")[2])
     # Ваша логика обработки добавления ссылки
     await callback.answer(f"Добавление ссылки для оффера {offer_id}\n"
-                          f"Введите ссылку ниже:")
+                          f"Введите ссылку в строку сообщений:")
     await state.set_state(AddUrl.url)
     await state.update_data(id = offer_id)
 

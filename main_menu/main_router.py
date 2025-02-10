@@ -44,7 +44,7 @@ async def about_project(message: types.Message):
     await message.answer(text = "Для перехода в тех поддержку нажмите на кнопку", reply_markup = tex_keyboard)
 
 
-@dp_main.message()
+@dp_main.message(F.text == "/start")
 async def handler(message: types.Message):
     logger.info(f'Сообщение: {message.text} от {message.from_user.id}')
     text = f"""👋 Привет, {message.from_user.first_name}\n\nДобро пожаловать в бота <b>Highly Agency</b> - твой инструмент для управления трафиком.

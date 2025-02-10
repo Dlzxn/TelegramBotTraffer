@@ -66,13 +66,10 @@ def status(money_out: int | str) -> str:
 
 pro_router = Router()
 
-but1 = InlineKeyboardButton(text = "👁️ Скрыть аккаунт", callback_data="inviz")
 but2 = InlineKeyboardButton(text = "↩️ Вывести", callback_data="output_money")
 but3 = InlineKeyboardButton(text = "📊 Статистика", callback_data="stat")
 but4 = InlineKeyboardButton(text = "📄 История Выводов", callback_data="hitory_output_money")
 but5 = InlineKeyboardButton(text = "↩️ Вернуться в главное меню", callback_data="menu")
-
-profile_keyboard = InlineKeyboardMarkup(inline_keyboard = [[but1, but2], [but3, but4], [but5]])
 
 
 @pro_router.message(F.text == "👦 Профиль")
@@ -86,6 +83,13 @@ async def pro_handler(message: types.Message):
         "rang": status(user.pay_out),
         "lids": user.lids,
     }
+    if user.is_private:
+        but1 = InlineKeyboardButton(text="👁️ Раскрыть аккаунт", callback_data="inviz")
+
+    else:
+        but1 = InlineKeyboardButton(text="👁️ Скрыть аккаунт", callback_data="inviz")
+
+    profile_keyboard = InlineKeyboardMarkup(inline_keyboard=[[but1, but2], [but3, but4], [but5]])
 
     image_path = create_profile_image(data)  # Предполагаем, что это возвращает путь к файлу
     # print(image_path)
@@ -98,6 +102,8 @@ async def inviz(c: CallbackQuery):
         user = await get_user_info_by_id(session, c.from_user.id)
     async with get_session()() as session:
         await update_user_privacy(session, c.from_user.id, user.is_private)
+
+    await c.message.answer("🚨Настройки приватности успешно обновлены")
 
 
 

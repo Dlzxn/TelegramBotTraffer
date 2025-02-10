@@ -218,7 +218,7 @@ async def update_plus_money(session: AsyncSession, telegram_id: int, amount: int
     result = await session.execute(select(User).where(User.telegram_id == telegram_id))
     user = result.scalars().first()
     if user:
-        user.money = amount
+        user.money += amount
         await session.commit()
         return user.money
     return None

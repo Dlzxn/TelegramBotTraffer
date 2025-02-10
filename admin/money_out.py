@@ -1,4 +1,4 @@
-from aiogram import Router, types, F
+from aiogram import Router, types, F, Bot
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -95,30 +95,19 @@ async def view_tickets(callback: types.CallbackQuery):
 
 @money_router.callback_query(F.data.startswith("menu:details"))
 async def view_ticket_details(callback: types.CallbackQuery):
-    _, _, status, ticket_id = callback.data.split(":")
+    data_parts = callback.data.split(":")
     async with get_session()() as session:
-        ticket = await get_ticket_by_id(session, int(ticket_id))
+        ticket = await get_ticket_by_id(session, int(data_parts[3]))
+    text = (f"💳 Заявка #{ticket.id}\n"
+            f"👤 Пользователь: {ticket.id_user}\n"
+            f"💰 Сумма: {ticket.money_out}₽\n"
+            f"🏦 Банк: {ticket.bank}\n"
+            f"🔢 Карта: {ticket.card_number}\n"
+            f"📝 Комментарий: {ticket.commentary}\n"
+            f"⏳ Дата создания: {ticket.time_created}\n"
+            f"📌 Статус: {ticket.status}")
 
-    text = (
-        f"💳 Заявка #{ticket.id}\n"
-        f"👤 Пользователь: {ticket.id_user}\n"
-        f"💰 Сумма: {ticket.money_out}₽\n"
-        f"🏦 Банк: {ticket.bank}\n"
-        f"🔢 Карта: {ticket.card_number}\n"
-        f"📝 Комментарий: {ticket.commentary}\n"
-        f"⏳ Дата создания: {ticket.time_created}\n"
-        f"📌 Статус: {ticket.status}"
-    )
-
-    keyboard = InlineKeyboardBuilder()
-    # Добавляем кнопки в одном ряду
-    keyboard.row(
-        types.InlineKeyboardButton(text="🔙 Назад", callback_data=f"menu:view:{status}:prev"),
-        types.InlineKeyboardButton(text="1/3", callback_data="no_action"),  # Неактивная кнопка
-        types.InlineKeyboardButton(text="Вперед", callback_data=f"menu:view:{status}:next")
-    )
-
-    await callback.message.edit_text(text, reply_markup=keyboard.as_markup())
+    await callback.message.edit_text(text, reply_markup=callback.message.reply_markup)
 
 @money_router.callback_query(F.data.startswith("menu:pending"))
 async def view_pending_tickets(callback: types.CallbackQuery):
@@ -147,7 +136,7 @@ async def show_pending_ticket(callback, ticket):
 
 @money_router.callback_query(F.data.startswith("menu:approve"))
 @money_router.callback_query(F.data.startswith("menu:reject"))
-async def process_ticket(callback: types.CallbackQuery):
+async def process_ticket(callback: types.CallbackQuery, bot: Bot):
     print(callback.data.split(":"))
     action, status, _, _,  ticket_id = callback.data.split(":")
     print(action + status)
@@ -170,6 +159,13 @@ async def process_ticket(callback: types.CallbackQuery):
         async with get_session()() as session:
             ticket = await get_ticket_by_id(session, int(ticket_id))
             print("ID", callback.from_user.id)
-            print(ticket.money_out)
+            print("MONEY OUT", ticket.money_out)
             await update_plus_out_money(session, ticket.id_user, ticket.money_out)
             await update_plus_money(session, ticket.id_user, -ticket.money_out)
+            await callback.message.answer("Вывод успешно подтвержден✍️")
+            await bot.send_message(ticket.id_user, f"✅Ваша заявка на вывод №{ticket.id} успешно подтверждена")
+    else:
+        await callback.message.answer("Вывод успешно отклонен✏️")
+        async with get_session()() as session:
+            ticket = await get_ticket_by_id(session, int(ticket_id))
+            await bot.send_message(ticket.id_user, f"❌Ваша заявка на вывод №{ticket.id} отклонена📌")

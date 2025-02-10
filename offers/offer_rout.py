@@ -2,7 +2,11 @@ from aiogram import Router, F
 from aiogram.types import (PollAnswer, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup,
                            Message, CallbackQuery)
 
-
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from db.CRUD import get_offers_by_user_id
+from aiogram import Router
+from sqlalchemy.ext.asyncio import AsyncSession
 from db.CRUD import get_offers_by_user_id, get_session, get_all_offers, assign_user_to_offer, create_myoffer
 
 
@@ -18,24 +22,84 @@ offers_rout = Router()
 async def offer(message: Message):
     await message.reply(text = "Выберите следующий пункт в меню", reply_markup = project_keyboard)
 
-@offers_rout.callback_query(lambda c: c.data == "my_offers")
+
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from db.CRUD import get_offers_by_user_id, get_offer_by_id
+from aiogram import Router
+from sqlalchemy.ext.asyncio import AsyncSession
+
+PAGE_SIZE = 6  # Количество офферов на одной странице
+
+
+
+# Генерация клавиатуры с офферами и пагинацией
+def generate_offers_keyboard2(offers, page, total_pages):
+    keyboard = InlineKeyboardBuilder()
+    for offer in offers:
+        keyboard.add(InlineKeyboardButton(text=f"📌 {offer.name}", callback_data=f"offer_info:{offer.id}"))
+
+    navigation_buttons = []
+    if page > 1:
+        navigation_buttons.append(InlineKeyboardButton(text="⬅️ Назад", callback_data=f"my_offers:{page - 1}"))
+    if page < total_pages:
+        navigation_buttons.append(InlineKeyboardButton(text="Вперёд ➡️", callback_data=f"my_offers:{page + 1}"))
+
+    keyboard.row(*navigation_buttons)
+    return keyboard.as_markup()
+
+
+@offers_rout.callback_query(lambda c: c.data.startswith("my_offers"))
 async def my_offers(c: CallbackQuery):
+    data = c.data.split(":")
+    page = int(data[1]) if len(data) > 1 else 1
     async with get_session()() as session:
         my_offers = await get_offers_by_user_id(session, c.from_user.id)
-    if len(my_offers) == 0:
-        await c.message.answer("У вас нет активных офферов")
-    else:
-        for offer in my_offers:
-            response_text = (
-                f"📌 Оффер #{offer.id}\n\n"
-                f"🏷 Название: {offer.name}\n"
-                f"⚒️ Действие: {offer.action}\n"
-                f"📝 Описание: {offer.commentary}\n"
-                f"💵 Цена: {offer.money}\n"
-                f"🌍 GEO: {offer.geo}\n\n\n"
-                f"📅 Ссылка: {offer.url}\n"
-            )
-            await c.message.answer(response_text)
+    total_offers = len(my_offers)
+    total_pages = (total_offers + PAGE_SIZE - 1) // PAGE_SIZE  # Округляем вверх
+
+    if total_offers == 0:
+        await c.message.edit_text("У вас нет активных офферов")
+        return
+
+    start_index = (page - 1) * PAGE_SIZE
+    end_index = start_index + PAGE_SIZE
+    offers_page = my_offers[start_index:end_index]
+
+    await c.message.edit_text(
+        "Выберите оффер:",
+        reply_markup=generate_offers_keyboard2(offers_page, page, total_pages)
+    )
+
+
+@offers_rout.callback_query(lambda c: c.data.startswith("offer_info"))
+async def offer_info(c: CallbackQuery):
+    print(c.data)
+    offer_id = int(c.data.split(":")[1])
+    async with get_session()() as session:
+        offers = await get_offers_by_user_id(session, c.from_user.id)
+    for x in offers:
+        if str(x.id) == str(offer_id):
+            offer = x
+    if offer is None:
+        await c.answer("Оффер не найден", show_alert=True)
+        return
+
+    response_text = (
+        f"📌 Оффер #{offer.id}\n"
+        f"🏷 Название: {offer.name}\n"
+        f"⚒️ Действие: {offer.action}\n"
+        f"📝 Описание: {offer.commentary}\n"
+        f"💵 Цена: {offer.money}\n"
+        f"🌍 GEO: {offer.geo}\n"
+        f"📅 Ссылка: {offer.url}"
+    )
+
+    back_button = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="↩️ Назад", callback_data="my_offers:1")]
+    ])
+
+    await c.message.edit_text(response_text, reply_markup=back_button)
 
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
