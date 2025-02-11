@@ -91,9 +91,8 @@ async def get_name(message: Message, state: FSMContext):
     data = await state.get_data()
     print(data)
     ticket = await create_ticket(get_session(), message.from_user.id, data['sum'], data['bank'], data["card_num"], data["comment"])
-    await message.reply(f"Заявка на вывод id{ticket.id} Успешно создана!\n\n"
-                        f"Ваш запрос обрабатывается, средства будут перечислены в течении 24 часов!\n\n"
-                        f"Спасибо за ваше терпение, если у вас останутся вопросы, свяжитесь с тех поддержкой!")
+    await message.reply(f"✅Заявка на вывод id{ticket.id} Успешно создана!\n\n"
+                        f"⏳Ваш запрос обрабатывается, средства будут перечислены в течении 24 часов!\n")
     await state.clear()
 
 

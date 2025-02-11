@@ -112,8 +112,8 @@ async def show_offer_details(c: CallbackQuery):
 
 
     de1 = InlineKeyboardButton(text="↩️ К списку офферов", callback_data="adm_offer_search")
-    de2 = InlineKeyboardButton(text="⌨ Изменить имя кнопки", callback_data=f"create_but_name_{offer_id}")
-    de3 = InlineKeyboardButton(text="✏ Изменить Текст", callback_data=f"refact_text_{offer_id}")
+    de2 = InlineKeyboardButton(text="⌨ Изменить название", callback_data=f"create_but_name_{offer_id}")
+    de3 = InlineKeyboardButton(text="✏ Изменить действие", callback_data=f"refact_text_{offer_id}")
     de4 = InlineKeyboardButton(text="📄 Изменить Описание", callback_data=f"refact_description_{offer_id}")
     de5 = InlineKeyboardButton(text="❌ Удалить оффер", callback_data=f"delete_offer_{offer_id}")
     refact_keyboard = InlineKeyboardMarkup(inline_keyboard=[[de4, de2], [de3, de5], [de1]])

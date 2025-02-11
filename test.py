@@ -7,7 +7,7 @@ user_data = {
     'bio': 'Python',
     "money": 100,
     "rang": "Security Master",
-    "lids": 254
+    "lids": 2599
 }
 
 

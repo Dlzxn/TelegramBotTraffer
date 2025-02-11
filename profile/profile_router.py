@@ -87,7 +87,7 @@ async def pro_handler(message: types.Message):
         but1 = InlineKeyboardButton(text="👁️ Раскрыть аккаунт", callback_data="inviz")
 
     else:
-        but1 = InlineKeyboardButton(text="👁️ Скрыть аккаунт", callback_data="inviz")
+        but1 = InlineKeyboardButton(text="👁 Скрыть аккаунт", callback_data="inviz")
 
     profile_keyboard = InlineKeyboardMarkup(inline_keyboard=[[but1, but2], [but3, but4], [but5]])
 
@@ -102,6 +102,23 @@ async def inviz(c: CallbackQuery):
         user = await get_user_info_by_id(session, c.from_user.id)
     async with get_session()() as session:
         await update_user_privacy(session, c.from_user.id, user.is_private)
+    async with get_session()() as session:
+        user = await get_user_info_by_id(session, c.from_user.id)
+        data = {
+        "id": c.from_user.id,
+        "name": c.from_user.first_name,
+        "money": user.money,
+        "rang": status(user.pay_out),
+        "lids": user.lids,
+    }
+    if user.is_private:
+        but1 = InlineKeyboardButton(text="👁️ Раскрыть аккаунт", callback_data="inviz")
+
+    else:
+        but1 = InlineKeyboardButton(text="👁 Скрыть аккаунт", callback_data="inviz")
+
+    profile_keyboard = InlineKeyboardMarkup(inline_keyboard=[[but1, but2], [but3, but4], [but5]])
+    await c.message.edit_reply_markup(reply_markup=profile_keyboard)
 
     await c.message.answer("🚨Настройки приватности успешно обновлены")
 

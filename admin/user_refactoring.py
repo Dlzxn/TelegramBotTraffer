@@ -40,22 +40,22 @@ async def process_username(message: types.Message, state: FSMContext):
     # Формируем сообщение с информацией
     text = (f"👤 Пользователь: {user.username}\n"
             f"ID: {user.id}\n\n"
-            f"📊 Подписчики: {user.lids}\n"
-            f"💰 Баланс: {user.money}\n"
-            f"Выведено денег: {user.pay_out}\n"
-            f"🏆 Админка: {'Да' if user.is_admin else 'Нет'}\n"
-            f"Приватность{'Да' if user.is_private else 'Нет'}\n"
+            f"📊 Лидов: {user.lids}\n"
+            f"💳 Баланс: {user.money}\n"
+            f"📤 Выведено денег: {user.pay_out}\n"
+            f"🛡 Админка: {'Да' if user.is_admin else 'Нет'}\n"
+            f"👁 Приватность{'Да' if user.is_private else 'Нет'}\n"
             f"🚫 Блокировка: {'Да' if user.is_ban else 'Нет'}")
 
     # Создаем клавиатуру
     keyboard = InlineKeyboardBuilder()
-    keyboard.button(text="Изменить подписчиков", callback_data=f"edit_lids:{user.id}")
-    keyboard.button(text="Изменить баланс", callback_data=f"edit_money:{user.id}")
-    keyboard.button(text="Изменить баланс вывода", callback_data=f"edit_out:{user.id}")
+    keyboard.button(text="👥Изменить лидов", callback_data=f"edit_lids:{user.id}")
+    keyboard.button(text="💲Изменить баланс", callback_data=f"edit_money:{user.id}")
+    keyboard.button(text="💱Изменить баланс вывода", callback_data=f"edit_out:{user.id}")
     if not user.is_ban:
-        keyboard.button(text="Заблокировать", callback_data=f"block_user:{user.id}")
+        keyboard.button(text="❌Заблокировать", callback_data=f"block_user:{user.id}")
     else:
-        keyboard.button(text="Разблокировать", callback_data=f"unblock_user:{user.id}")
+        keyboard.button(text="✔Разблокировать", callback_data=f"unblock_user:{user.id}")
     keyboard.adjust(2)
 
     await message.answer(text, reply_markup=keyboard.as_markup())

@@ -11,7 +11,7 @@ from text.all_texts import info_text, manual_url, navigation_url
 all_command: list = ["📌 О проекте", "👦 Профиль", "📦 Офферы", "📃 Мануал", "🛠️ Тех Поддержка"]
 
 button1 = KeyboardButton(text = "📌 О проекте", callback_data="info")
-button2 = KeyboardButton(text = "👦 Профиль", callback_data="profile")
+button2 = KeyboardButton(text = "👤 Профиль", callback_data="profile")
 button3 = KeyboardButton(text = "📦 Офферы", callback_data="offers")
 button4 = KeyboardButton(text = "📃 Мануал", url="")
 button5 = KeyboardButton(text = "🛠️ Тех Поддержка", callback_data="tex")
